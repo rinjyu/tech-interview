@@ -1,22 +1,21 @@
-  * [1. 자료구조](#1-)
-  * [2. Java](#2-java)
-  * [3. Spring](#3-spring)
-  * [4. Server](#4-server)
-  * [5. Network](#5-network)
-  * [6. DB](#6-db)
-  * [7. 운영체제(OS)](#7-os)
-  * [8. Architecture](#8-architecture)
-  * [9. VCS](#9-vcs)
-  * [10. Build](#10-build)
-  * [11. CI/CD](#11-cicd)
-  * [12. Testing](#12-testing)
-  * [13. Infra](#13-infra)
-  * [14. 방법론](#14-)
-  * [15. 모니터링 및 분석 도구](#15----)
-  * [16. 보안 & 인증](#16---)
-  * [17. 기타 언어](#17--)
-  * [18. 용어](#18-)
-
+* [1. 자료구조](#1-)
+* [2. Java](#2-java)
+* [3. Spring](#3-spring)
+* [4. Server](#4-server)
+* [5. Network](#5-network)
+* [6. DB](#6-db)
+* [7. 운영체제(OS)](#7-os)
+* [8. Architecture](#8-architecture)
+* [9. VCS](#9-vcs)
+* [10. Build](#10-build)
+* [11. CI/CD](#11-cicd)
+* [12. Testing](#12-testing)
+* [13. Infra](#13-infra)
+* [14. 방법론](#14-)
+* [15. 모니터링 및 분석 도구](#15----)
+* [16. 보안 & 인증](#16---)
+* [17. 기타 언어](#17--)
+* [18. 용어](#18-)
 
 ## 1. 자료구조
 
@@ -233,6 +232,7 @@
         - Primitive -> Wrapper
     2. UnBoxing
         - Wrapper -> Primitive
+
     - 기존의 자바에 Collection 자료구조 인터페이스들이 하나둘씩 추가됨에 따라 기본타입을 활용해서 Collection에 담을 수 없게 되어 그로 인애 primitive
       타입을 내부로 감싼 Wrapper 타입을 활용하게 되고 좀더 유연한 Collection 사용이 가능해지도록 하였음
 
@@ -332,13 +332,108 @@
         - 서비스 클래스로 구성되고, 데이터 접근 계층에서 제공하는 서비스를 사용
     - Integration Layer
         - 웹별 웹 서비스
-13. Spring Webflux
-14. Spring Cloud Gateway
-15. 예외 처리
+13. Spring Cloud Config
+    - 마이크로서비스의 어떠한 설정(환경변수값, Spring cloud 설정 등)이 변경되었을때 서버 재시작 없이 동적으로 적용하기 위함
+    - 마이크로서비스가 배포될때 제반 설정값들을 배포 대상 환경(개발계, 검증계, 운영계 등)에 맞게 적용하기 위함
+    - 마이크로서비스를 Stateless하게 개발하기 위함
+        - Stateless하게 만들어야 스케일링(마이크로서비스 인스턴스 서버 - 즉, 컨테이너의 증감)과 부담없는 재시작이 가능함
+    - 분산 시스템에서 스프링 프로젝트의 설정파일을 외부로 분리시켜 중앙집중관리 가능
+      - 다른 git repo에 application.yml 두고 관리
+    - 설정이 변경되었을 때 애플리케이션의 재배포 없이 적용가능
+      - @RefreshScope : 앱 재배포 없이 실시간 반영 방법 (재기동 되는 방법)
+    - bootstrap.yml : 스프링부트 앱 기동시 application.yml 보다 먼저 로드
+14. Spring Cloud Eureka
+    - 각 마이크로서비스의 IP/FQDN과 PORT정보를 저장하고 제공하는 Service Discovery
+    - Microservice와 Eureka server간 통신
+        - 각 마이크로서비스는 구동 시 Service Discovery(Eureka Server)에 자신의 IP/FQDN과 PORT를 등록함
+        - Eureka Server는 주기적으로 각 마이크로서비스의 실행여부를 체크하는데, 정지된 경우, registry에서 삭제함
+        - 각 마이크로서비스는 등록된 모든 마이크로서비스의 정보를 주기적으로 갖고 와서 캐싱할 수 있음
+        - 한 마이크로서비스가 다른 마이크로서비스를 연결할때는 캐싱된 registry정보를 이용하거나 Eureka server를 조회하여 대상 마이크로서비스의
+          IP/FQDN과 PORT를 구해 연결함
+15. Spring Cloud Zuul
+    - API Gateway
+    - zuul은 Java로 개발된 서버이고 커스터마이징할 수 있는 어플리케이션
+    - class로 개발된 filter가 이용되며, overriding하여 필요한 수행을 추가할 수 있음
+    - 보통 들어오는 요청에 대해 'pre' filter에서 인증/인가 처리를 하고, routing filter에서 L/B, Routing, Circuit break를
+      처리하며, Post filter에서 요청과 응답에 대한 Logging을 처리
+    - L/B는 ribbon이라는 라이브러리가 사용되고, Routing은 zuul core라이브러리가 사용되며, Circuit break는 Hystrix라이브러리가 사용됨
+    - 서블릿 프레임워크 기반으로 동기(Synchronous), 블로킹(Blocking) 방식으로 서비스를 처리
+    - Zuul2는 비동기, 논블로킹 가능 -> Spring에서 사용하기 어려움 -> Spring Cloud Gateway 사용
+        ![img_6.png](img_6.png)
+16. Spring Cloud Gateway
+    - MSA 환경에서 사용하는 API Gateway
+      - Kuberentes Ingress 와 비슷?
+        - kubernetes 내 컨테이너 서비스들을 URI별로 다르게 호출시 사용하나, 서비스 인증/보안 JWT 기능을 Ingress에서 구현 불가
+    - API Gateway가 필요한 이유는 안전한 API유통과 Client 요청별로 유연하게 대처하기 위함이며, API Gateway는 인증/인가, L/B & 라우팅, 로깅, Circuit Breaker의 역할을 함
+        ![img_7.png](img_7.png)
+    - Spring5, SpringBoot2, Project Reactor
+    - API 라우팅 및 보안, 모니터링/메트릭
+    - 모든 트래픽이 Spring Cloud Gateway를 통하기에 인증/보안에 좋고 모니터링이 가능함
+    - URI에 따라 서비스 엔드포인트를 다르게 할수 있음(동적 라우팅, 도메인변경 불필요)
+    - 동적라우팅으로 신규 스펙 일부 적용/ 트래픽 점진적 증대 가능
+    - Netty 런타임 기반으로 동작 (서블릿 컨테이너나 WAR로 빌드된 경우 동작하지 않음)
+17. Spring Cloud Ribbon
+    - Ribbon은 Load balancing을 요청 어플리케이션 단에서 수행해주는 Client-side Load balancer
+    - Ribbon을 사용하면 API Gateway없이 대상 어플리케이션을 직접 로드밸런싱하여 연결할 수 있음
+18. Spring Cloud LoadBalancer
+    - Spring Cloud Ribbon과 동일한 Client-side Load Balancer
+    - Client side Load balancer가 필요한 이유는 부하분산을 적절하게 하여 서비스의 가용성을 최대화하기 위함
+19. Netflix Ribbon vs Spling Cloud LoadBalancer
+    1. HttpClinet 지원
+        - Ribbon은 Blocking방식의 HttpClient인 RestTemplate만 지원
+        - SCL은 RestTemplate뿐 아니라, Non-blocking방식을 지원하는 Spring WebClient도 지원
+    2. Load Balancing 정책
+       - Ribbon은 RoundRobin, AvailabilityFilteringRule, WeightedResponseTimeRule의 3가지 정책을 지원
+       - SCL은 RoundRobin과 Random정책만 지원
+20. Spring Cloud Histrix
+    - Hystrix는 마이크로서비스의 전류차단기(Circuit Breaker) 역할을 하는 오픈소스
+    - 누전차단기가 전기사고가 발생하기 전에 전기를 미리 차단하는것과 동일하게, 문제가 있는 마이크로서비스로의 트래픽을 차단하여 전체서비스가 느려지거나 중단되는것을 미리 방지하기 위해 필요함
+21. Spring Cloud Sleuth
+    - Sleuth는 분산된 마이크로서비스간에 트래픽의 흐름을 추적(Tracing)할 수 있도록 Trace기록을 로그에 자동 삽입
+    - Sleuth와 Zipkin이 필요한 이유는 분산된 마이크로서비스간의 트래픽을 추적하여 문제를 사전에 방지하거나 해결하기 위함
+    - 마이크로 서비스 환경에서 클라이언트의 호출 추적하는 zipkin client library
+    - 호출되는 서비스에 Trace-ID(클라이언트 호출 시작부터 끝까지 동일한 ID), Span-ID(마이크로서비스당 1개 ID) 부여
+22. Zipkin
+    - Zipkin은 분산 트랜잭션 추적을 위한 오픈소스소프트웨어
+    - 마이크로 서비스 환경에서 로그 트레이싱하는 오픈소스
+    - zipkin client library와 zipkin server(Collector, Storage, API, Web UI)로 구성
+    - zipkin client library : 트레이싱 정보 수집해 Collector 모듈 호출 (HTTP, Kafka 큐 사용)
+    - zipkinserver
+      - Collector : 트레이싱 정보 수집, 유효성 검증, 검색 가능하게 색인화
+      - Storage : 트레이싱 정보 저장 (In-Memory, MySQL, Cassandra, ElasticSearch)
+      - API : 트레이싱 정보 검색 JSON API
+      - Web UI : GUI로 만든 대시보드, 서비스 / 시간 / 어노테이션 기반으로 데이터 확인
+23. Spring Cloud Circuit Breaker & Resilience4J
+    1. Spring Cloud Circuit Breaker
+       - Netflix Hystrix, Resilience4J, Alibaba Sential, Spring Retry와 같은 Circuit Breaker제품들을 사용하기 위해 표준 인터페이스를 제공하는 추상화(또는 Facade) 라이브러리
+    2. Resilience4J
+       - Java 전용으로 개발된 경량화된 Fault Tolerance(장애감내) 제품
+       - 핵심 모듈
+         1. Circuit Breaker
+            - Count(요청건수 기준) 또는 Time(집계시간 기준)으로 Circuit Breaker제공
+         2. Bulkhead
+            - 각 요청을 격리함으로써, 장애가 다른 서비스에 영향을 미치지 않게 함(bulkhead-격벽이라는 뜻)
+         3. RateLimiter
+            - 요청의 양을 조절하여 안정적인 서비스를 제공. 즉, 유량제어 기능임.
+         4. Retry
+            - 요청이 실패하였을 때, 재시도하는 기능 제공
+         5. TimeLimiter
+            - 응답시간이 지정된 시간을 초과하면 Timeout을 발생시켜줌
+         6. Cache
+            - 응답 결과를 캐싱하는 기능 제공
+24. Spring WebClient
+    - 웹으로 API를 호출하기 위해 사용되는 Http Client 모듈 중 하나
+    - 요청자와 제공자 사이의 통신을 좀 더 효율적인 Non-Blocking방식으로 하기 위해서 필요함
+    1. Resttemplate과 WebClient
+        1. 공통점
+            - HttpClient모듈
+        2. 차이점
+           - 통신방법이 RestTemplate은 Blocking방식이고, WebClient는 Non-Blocking방식
+25. 예외 처리
     - checked exception (IO exception), uncheked exception (null pointer exception)
     - error response 통일화, message, code, status Root & Enum 관리, @ControllerAdvice 어노테이션을 통해 모든 예외를
       핸들링, RuntimeException을 상속받는 커스텀 클래스를 생성 및 사용
-16. DAO, DTO, VO, Entity의 차이
+26. DAO, DTO, VO, Entity의 차이
     1. DAO(Data AccessObject)
         - DB를 사용해 데이터를 조회/조작하는 기능을 전담하기 위해 만들어진 오브젝트
         - DB 데이터에 접근하기 위한 객체, 직접 DB에 접근하여 데이터를 삽입, 삭제, 조회 등 조작할 수 있는 기능을 수행함
@@ -361,6 +456,42 @@
         - 영속화될 수 있고 식별 가능한 객체로, 실제 DB 테이블과 1:1로 매핑되는 클래스
         - DB의 테이블 내에 존재하는 컬럼만을 속성(필드)로 가져야 함
         - 상속을 받거나 구현체여서는 안되고, 테이블 내에 존재하지 않는 컬럼을 가져서도 안됨
+27. ORM
+    - 객체 관계 매핑, 객체와 RDB를 별개로 설계하고 ORM이 중간에서 매핑해주는 역할
+    - SQL 문이 RDB에 데이터 그 자체와 매핑하기 때문에 SQL을 직접 작성할 필요가 없음
+28 Mybatis
+    - 개발자가 지정한 SQL, 저장프로시저 그리고 몇가지 고급 매핑을 지원하는 퍼시스턴스 프레임워크
+    - JDBC로 처리하는 상당부분의 코드와 파라미터 설정및 결과 매핑을 대신해줌
+    - 데이터베이스 레코드에 원시타입과 Map 인터페이스 그리고 자바 POJO 를 설정해서 매핑하기 위해 XML과 애노테이션을 사용할 수 있음
+    - SQL Mapper를 지원해주는 Framework
+    - SQL 작성을 직접 하여 객체와 매핑시켜줌
+28. SQL Mapper
+    - SQL문을 이용하여 RDB에 접근, 데이터를 오브젝트(객체)화 시켜줌
+    - 개발자가 작성한 SQL문으로 해당되는 ROW를 읽어 온 후 결과 값을 오브젝트화 시켜 사용가능하게 만들어줌
+    - DB에 따라 SQL 문법이 다르기 때문에 특정 RDB에 종속적
+29. JPA vs Mybatis
+    1. JPA
+       1. 장점
+          - RDB에 종류와 관계없이 사용 가능하다. 추후 DB 변경이나 코드 재활용에 용이함
+          - 기본적인 CRUD 제공과 페이징 처리 등 상당 부분 구현되어 있어 비지니스 로직에 집중할 수 있음
+          - 테이블 생성, 변경 등 엔티티 관리가 간편함
+          - 쿼리에 집중할 필요 없어 빠른 개발이 가능함
+            - SQL을 몰라도 된다는 뜻이 아니며, JPA는 SQL을 잘할수록 훨씬 더 잘 사용할 수 있음
+            - 쿼리를 직접 작성할 필요 없이 Java 코드로 간편하게 사용할 수 있음
+       2. 단점
+          - 어려움
+            - 단방향, 양방향, 임베디드 관계 등 이해해야할 내용이 많으며, 연관관계 이해 없이 잘못 코딩 했을 시 성능상의 문제와 동작이 원하는대로 되지 않는 일이 발생함          
+    2. Mybatis
+       1. 장점
+          - JPA에 비해 쉬움
+            - SQL 쿼리를 그대로 사용하기에 복잡한 Join, 튜닝 등을 좀더 수월하게 작성 가능
+          - SQL의 세부적인 내용 변경 시 좀 더 간편함
+          - 동적 쿼리 사용 시 JPA보다 간편하게 구현이 가능함
+       2. 단점
+          - 데이터 베이스 설정 변경 시 수정할 부분이 너무 많음
+            - 예) Oracle의 페이징 쿼리를 MySQL에서 사용 불가능
+          - Mapper작성부터 인터페이스 설계까지 JPA보다 많은 설계와 파일, 로직이 필요함
+          - 특정 DB에 종속적임
 
 ## 4. Server
 
@@ -504,6 +635,18 @@
     - Redis는 한 트랜잭션당 하나의 명령만 수행 가능해 race condition 안생김 (공유자원 문제)
     - Single thread로 이슈 덜하나 더블클릭으로 여러번 데이터 들어갈 수 있음
     - 인증 토큰 저장/ 유저 API limit이 있는 상황에서 주로 사용
+    - 특징
+        1. 영속성을 지원하는 인메모리 데이터 저장소
+        2. 읽기 성능 증대를 위한 서버 측 복제를 지원
+            - 전체 데이터베이스의 초기 복사본을 받는 마스터/슬레이브 복제를 지원
+            - 마스터에서 쓰기가 수행되면 슬레이브 데이터 세트를 실시간으로 업데이터하기 위해 연결된 모든 슬레이브로 전송됨
+        3. 쓰기 성능 증대를 위한 클라이언트 측 샤딩(Sharding)을 지원
+        4. 다양한 데이터형 지원
+    - 장점
+        - 리스트, 배열과 같은 데이터를 처리하는데 유용함
+        - Message Queue, Shared Memory, Remote Dictionary(RDBMS의 캐시 솔루션 / read 속도가 매우 빠릅니다.) 용도로 사용함
+        - 메모리를 활용하면서 데이터를 보존함
+        - Redis Server는 1개의 싱글 쓰레드로 수행되며, 서버 하나에 여러개의 서버를 띄우는 것이 가능함
 4. Memcached
     - key-value 메모리 캐시
         - key-value 쌍으로 이루어진 간단한 데이터 타입을 저장함
@@ -581,7 +724,176 @@
 
 ## 8. Architecture
 
-- MSA
+1. MSA : MicroService Architecture
+    - 단일 애플리케이션을 작은 서비스 모음으로 개발하는 접근 방식
+    - 각각은 자체 프로세스에서 실행이 되고, 느슨한 연결 구조로 만들어 HTTP 리소스인 REST와 같은 경량 메커니즘과 통신을 함
+        - 즉, 하나의 큰 애플리케이션을 여러 개의 작은 애플리케이션으로 쪼개어 변경과 조합이 가능하도록 만든 아키텍처
+
+    1. 장점
+        - 분산형 개발을 통해 효율적인 개발 가능(출시 기간 단축)
+        - 개별 서비스가 다른 서비스에 부정적인 영향을 주지 않으면서 작동할 수 있음(뛰어난 복구 능력)
+        - 다른 서비스들과 유연하게 결합하며(언어의 제약 X) 향후 확장 및 새로운 기능 통합 등에 대비할 수 있음(높은 확장성)
+        - 기존의 모놀리식에 비해 더욱 모듈화되었기 때문에 배포에 따른 우려 사항들이 적어짐(손쉬운 배포)
+        - 개발자들이 각각의 서비스를 파악하고 개선하기에 용이해짐(편리한 액세스)
+    2. 단점
+        - 큰 프로젝트에는 많은 서비스들이 존재하므로, 모든 서비스를 모니터링 하는 오버헤드가 증가함
+        - 서비스에서 다른 서비스를 호출하므로 서비스에 장애가 발생한 경우 경로 및 장애 추적이 힘들 수 있음
+        - 서비스별로 로그가 생성되기 때문에 중앙 로그 모니터링은 존재하지 않음
+        - 각 서비스는 API를 통해 통신하므로 네트워크 통신에 의한 오버헤드가 발생
+    3. MSA의 구조적 문제점
+        1. 개발 복잡도와 숙련도
+            - 분산 시스템 개발은 일반 개발보다 복잡함
+            - 독립적인 서비스이기 때문에 각 모듈의 인터페이스를 신중하게 처리해야 함
+            - 요청에 응답하지 않게 될 경우에 대한 방어 코드도 작성해야 하며 호출 대기 시간이 일정 수준을 넘기면 복잡한 상황이 발생할 수 있음
+            - 동기적인 처리방식인 REST 통신으로 인한 제약이 발생할 수 있음
+        2. 트랜잭션 관리
+            - Database Per Service라는 새로운 요구사항으로 분산된 서비스마다 분리된 DB들 간의 트랜잭션 관리가 어려울 수 있음
+            - 반정규화 된 데이터의 동기 처리도 신경을 써야함
+        3. 통합 테스트 어려움
+            - 테스트를 시작하기 전에 의존성이 있는 서비스를 미리 확인해야 함
+        4. 배포 복잡함
+            - 각 서비스 간의 조정이 필요 할 수 있음
+    4. Saga 패턴
+        - 마이크로서비스들끼리 이벤트를 주고 받아 특정 마이크로서비스에서의 작업이 실패하면 이전까지의 작업이 완료된 마이크로서비스들에게 보상 이벤트를 소싱함으로써 분산
+          환경에 원자성을 보장하는 패턴 -> 트랜잭션 관리 주체가 Application에 있음
+
+        1. 종류
+            1. 코레오그레피 Sage 패턴
+                - 보유한 서비스 내의 Local 트랜잭션을 관리하며 트랜잭션이 종료하게 되면 완료 Event를 발행함
+                - 만약 그 다음 수행해야할 트랜잭션이 있으면 해당 트랜잭션을 수행해야하는 App으로 이벤트를 보내고, 해당 App은 완료 Event를 수신받고 다음
+                  작업을 진행하며, 이를 순차적으로 수행함
+                - Event는 Kafka와 같은 메시지 큐를 통해서 비동기 방식으로 전달할 수 있음
+
+                1. 장점
+                    - 구성하기 편함
+                2. 단점
+                    - 운영자 입장에서 트랜잭션의 현재 상태를 확인하기 어려움
+            2. 오케스트레이션 Saga 패턴
+                - 트랜잭션 처리를 위해 Saga 인스턴스(Manager)가 별도로 존재함
+                - 트랜잭션에 관여하는 모든 Application은 Manager에 의해 점진적으로 트랜잭션을 수행하며 결과를 Manager에게 전달하게 되고,
+                  비지니스 로직상 마지막 트랜잭션이 끝나면 Manager를 종료해서 전체 트랜잭션 처리를 종료함
+                - 만약 중간에 실패하게 되면 Manager에서 보상 트랜잭션을 발동하여 일관성을 유지함
+                - 해당 Orchestration-Based Saga 패턴은 모든 관리를 Manager가 호출하기 때문에 분산트랜잭션의 중앙 집중화가 이루어짐
+
+                1. 장점
+                    - 서비스간의 복잡성이 줄어들어서 구현 및 테스트가 쉬워짐
+                    - 트랜잭션의 현재 상태를 Manager가 알고 있으므로 롤백을 하기 쉬움
+                2. 단점
+                    - 관리를 해야하는 Orchestrator 서비스가 추가되어야하기 때문에 인프라 구현이 복잡해짐
+    5. CQRS 패턴
+        - Command and Query Responsibility Segregation의 약자입니다. 이를 해석하면 명령과 쿼리의 역할을 구분한다는 것
+            - 즉, Command (Create, Insert, Update, Delete)와 쿼리(Select - Read)의 책임을 분리하는 의미를 가짐
+
+            1. 필요한 이유
+                - 전통적인 CRUD 아키텍처 기반에서 Application을 개발 및 운영하다가 보면, 자연스럽게 Domain Model의 복잡도가 증가하고 그에
+                  따라 유지보수의 비용이 증가하고 Domain model은 설계의 방향과 다르게 변질되는데, 필요하지 않은 Domain 속성들로 인해 복잡도가 증가함
+            2. Simple CQRS
+                - Data Store에 Command Query Model을 분리하는 계층으로 나누는 방식
+                - Database(RDBMS)는 분리하지 않고 기존 구조를 유지하고 Model Layer 부분과 Command와 Query Model로 분리하는
+                  수준으로 간단하게 적용
+
+                1. 장점
+                    - 훨씬 단순하게 구현 및 적용할 수 있음
+                2. 단점
+                    - 동일한 Database 사용에 따른 성능상 문제점은 개선하지 못함
+            3. CQRS with separated persistance mechanisms
+                - Command용 Database와 Query용 Database를 분리하고 별도의 Broker를 통해서 이 둘간의 Data를 동기화 처리하는 방식
+                - 데이터를 조회하려는 서비스들은 서비스에 맞는 저장소를 선택할 수 있기 때문에 polyglot 구조(다수의 Database를 혼용하여 사용)로 구성할
+                  수도 있음
+                - 각각의 Model에 맞게 저장소(RDBMS, NOSQL, Cache)를 튜닝해서 사용할 수 있음
+
+                1. 장점
+                    - Simple CQRS 에서 거론되는 Database 사용에 발생하는 성능 관점의 문제를 해결
+                2. 단점
+                    - 동기화 처리를 위한 Broker의 가용성과 신뢰도가 보장이 되어야 함
+            4. EventSouring Model
+                - 이벤트 스트림을 저장하는 Database에는 오직 데이터 추가만 가능하고 계속적으로 쌓이는 데이터를 구체화시키는 시점에서 그때까지 구축된 데이터를
+                  바탕으로 조회 대상 데이터를 작성하는 방법
+                - 이벤트 소싱의 이벤트 스트림은 오직 추가만 가능하고, 필요로 하는 시점에 구체화 단계를 가지게 되고 이 처리과정이 CQRS의 모델 분리 관점에서 잘
+                  맞기 때문에 주로 선택됨
+
+                1. 장점
+
+                - 독립적인 크기 조정
+                    - CQRS를 통해 읽기 및 쓰기의 워크로드를 독립적으로 확장할 수 있음
+                - 최적화된 데이터 스키마
+                    - 읽기 쪽에서는 쿼리에 최적화된 스키마를 사용하고 쓰기에서는 업데이트에 최적화된 스키마를 사용할 수 있음
+                - 보안
+                    - 올바른 도메인 엔터티만 데이터에 쓰기를 수행할 수 있는지 쉽게 확인 가능함
+                - 유연한 모델 생성
+                    - 대부분의 복잡한 비즈니스 논리는 쓰기 모델로 이동시키고 읽기모델은 상대적으로 간단하게 정리하여 유지가능하고 유연한 모델을 만들 수 있음
+                - 단순한 쿼리
+                    - 읽기 데이터베이스에서 구체화된 뷰를 저장하여 쿼리 시 복잡한 조인을 방지
+
+                2. 단점
+2. REST
+    - 자원을 이름으로 구분하여 해당 자원의 상태(정보)를 주고 받는 모든 것을 의미함
+    - HTTP URI를 통해 자원을 명시하고, HTTP Method를 통해 해당 자원에 대한 CRUD 오퍼레이션을 적용하는 것을 의미함
+        1. 장/단점
+            1. 장점
+                1. HTTP 프로토콜의 인프라를 그대로 사용하므로 REST API 사용을 위한 별도의 인프라를 구출할 필요가 없다.
+                2. HTTP 프로토콜의 표준을 최대한 활용하여 여러 추가적인 장점을 함께 가져갈 수 있게 해준다.
+                3. HTTP 표준 프로토콜에 따르는 모든 플랫폼에서 사용이 가능하다.
+                4. Hypermedia API의 기본을 충실히 지키면서 범용성을 보장한다.
+                5. REST API 메시지가 의도하는 바를 명확하게 나타내므로 의도하는 바를 쉽게 파악할 수 있다.
+                6. 여러가지 서비스 디자인에서 생길 수 있는 문제를 최소화한다.
+                7. 서버와 클라이언트의 역할을 명확하게 분리한다.
+            2. 단점
+                1. 표준이 존재하지 않는다.
+                2. 사용할 수 있는 메소드가 4가지 밖에 없다.
+                3. HTTP Method 형태가 제한적이다.
+                4. 브라우저를 통해 테스트할 일이 많은 서비스라면 쉽게 고칠 수 있는 URL보다 Header 값이 왠지 더 어렵게 느껴진다.
+                5. 구형 브라우저가 아직 제대로 지원해주지 못하는 부분이 존재한다.
+                6. PUT, DELETE를 사용하지 못하는 점
+                7. pushState를 지원하지 않는 점
+            3. 구성 요소
+                1. 자원(Resource): URI
+                    - 모든 자원에 고유한 ID가 존재하고, 이 자원은 Server에 존재한다.
+                    - 자원을 구별하는 ID는 ‘/groups/:group_id’와 같은 HTTP URI 다.
+                    - Client는 URI를 이용해서 자원을 지정하고 해당 자원의 상태(정보)에 대한 조작을 Server에 요청한다.
+                2. 행위(Verb): HTTP Method
+                    - HTTP 프로토콜의 Method를 사용한다.
+                    - HTTP 프로토콜은 GET, POST, PUT, DELETE 와 같은 메서드를 제공한다.
+                3. 표현(Representation of Resource)
+                    - Client가 자원의 상태(정보)에 대한 조작을 요청하면 Server는 이에 적절한 응답(Representation)을 보낸다.
+                    - REST에서 하나의 자원은 JSON, XML, TEXT, RSS 등 여러 형태의 Representation으로 나타내어 질 수 있다.
+                    - JSON 혹은 XML를 통해 데이터를 주고 받는 것이 일반적이다.
+            4. 특징
+                1. Server-Client(서버-클라이언트 구조)
+                    - 자원이 있는 쪽이 Server, 자원을 요청하는 쪽이 Client가 된다.
+                        - REST Server: API를 제공하고 비즈니스 로직 처리 및 저장을 책임진다.
+                        - Client: 사용자 인증이나 context(세션, 로그인 정보) 등을 직접 관리하고 책임진다.
+                    - 서로 간 의존성이 줄어든다.
+                2. Stateless(무상태)
+                    - HTTP 프로토콜은 Stateless Protocol이므로 REST 역시 무상태성을 갖는다.
+                    - Client의 context를 Server에 저장하지 않는다.
+                        - 즉, 세션과 쿠키와 같은 context 정보를 신경쓰지 않아도 되므로 구현이 단순해진다.
+                    - Server는 각각의 요청을 완전히 별개의 것으로 인식하고 처리한다.
+                        - 각 API 서버는 Client의 요청만을 단순 처리한다.
+                        - 즉, 이전 요청이 다음 요청의 처리에 연관되어서는 안된다.
+                        - 물론 이전 요청이 DB를 수정하여 DB에 의해 바뀌는 것은 허용한다.
+                        - Server의 처리 방식에 일관성을 부여하고 부담이 줄어들며, 서비스의 자유도가 높아진다.
+                3. Cacheable(캐시 처리 가능)
+                    - 웹 표준 HTTP 프로토콜을 그대로 사용하므로 웹에서 사용하는 기존의 인프라를 그대로 활용할 수 있다.
+                        - 즉, HTTP가 가진 가장 강력한 특징 중 하나인 캐싱 기능을 적용할 수 있다.
+                        - HTTP 프로토콜 표준에서 사용하는 Last-Modified 태그나 E-Tag를 이용하면 캐싱 구현이 가능하다.
+                    - 대량의 요청을 효율적으로 처리하기 위해 캐시가 요구된다.
+                    - 캐시 사용을 통해 응답시간이 빨라지고 REST Server 트랜잭션이 발생하지 않기 때문에 전체 응답시간, 성능, 서버의 자원 이용률을
+                      향상시킬 수 있다.
+                4. Layered System(계층화)
+                    - Client는 REST API Server만 호출한다.
+                    - REST Server는 다중 계층으로 구성될 수 있다.
+                        - API Server는 순수 비즈니스 로직을 수행하고 그 앞단에 보안, 로드밸런싱, 암호화, 사용자 인증 등을 추가하여 구조상의
+                          유연성을 줄 수 있다.
+                        - 또한 로드밸런싱, 공유 캐시 등을 통해 확장성과 보안성을 향상시킬 수 있다.
+                    - PROXY, 게이트웨이 같은 네트워크 기반의 중간 매체를 사용할 수 있다.
+                5. Code-On-Demand(optional)
+                    - Server로부터 스크립트를 받아서 Client에서 실행한다.
+                    - 반드시 충족할 필요는 없다.
+                6. Uniform Interface(인터페이스 일관성)
+                    - URI로 지정한 Resource에 대한 조작을 통일되고 한정적인 인터페이스로 수행한다.
+                    - HTTP 표준 프로토콜에 따르는 모든 플랫폼에서 사용이 가능하다.
+                        - 특정 언어나 기술에 종속되지 않는다.
 
 ## 9. VCS
 
@@ -846,13 +1158,17 @@
 ## 16. 보안 & 인증
 
 1. 암복호화 방식
-
-- Hash는 암호화만 가능, Encryption은 암복화 둘다 가능
-- 대칭키 : 단일키로 암복화 (공개키, 빠름 & 보안취약)
-- 비대칭키 : 2개키로 암복화 (공개키-비공개키, 전자서명, 느림 & 암호긺)
-
+   - Hash는 암호화만 가능, Encryption은 암복화 둘다 가능
+   - 대칭키 : 단일키로 암복화 (공개키, 빠름 & 보안취약)
+   - 비대칭키 : 2개키로 암복화 (공개키-비공개키, 전자서명, 느림 & 암호긺)
 2. SQL Injection
-3. JWT
+    - 임의의 SQL 문을 주입하고, 실행되게 하여 데이터베이스가 비정상적으로 동작을하도록 조작하는 행위
+3. XSS
+    - 관리자가 아닌 권한이 없는 사용자가 웹 사이트에 스크립트를 삽입하여 공격하는 기법
+    - 리다이렉션 스크립트를 주입하거나 사용자의 쿠키를 탈취하여 세션 하이잭킹 공격을 수행하기도 함
+4. Command Injection
+   - 웹 애플리케이션에서 시스템 명령을 사용할 때, 세미콜론 혹은 &, &&를 사용하여 하나의 Command를 주입하여 두 개의 명령어가 실행되게 하는 공격
+5. JWT
     - Json WebToken
     - 토큰기반의 계정 인증 방식
         - 사용 방법
@@ -940,3 +1256,22 @@
     - failover : G/W 이중화, 헬스체크
         - Nginx 다운 : L7에서 처리
         - G/W 다운 : reverse proxy 전용 nginx 서버 구축, L7에서 바로 URI 별 API 호출
+7. REST API
+    - REST 기반으로 서비스 API를 구현하는 것을 말함
+
+    1. 특징
+
+    - 사내 시스템들도 REST 기반으로 시스템을 분산해 확장성과 재사용성을 높여 유지보수 및 운용을 편리하게 할 수 있다.
+    - REST는 HTTP 표준을 기반으로 구현하므로, HTTP를 지원하는 프로그램 언어로 클라이언트, 서버를 구현할 수 있다.
+        - 즉, REST API를 제작하면 델파이 클라이언트 뿐 아니라, 자바, C#, 웹 등을 이용해 클라이언트를 제작할 수 있다.
+8. Restful
+    - 일반적으로 REST라는 아키텍처를 구현하는 웹 서비스를 나타내기 위해 사용하는 용어로, REST API를 제공하는 웹 서비스를 Restful하다고 할 수 있음
+        - 즉, REST 원리를 따르는 시스템은 Restful이란 용어로 지칭됨
+
+    1. 목적
+        - 이해하기 쉽고 사용하기 쉬운 REST API를 만드는 것
+        - RESTful한 API를 구현하는 근본적인 목적이 성능 향상에 있는 것이 아니라 일관적인 컨벤션을 통한 API의 이해도 및 호환성을 높이는 것이 주 동기이니,
+          성능이 중요한 상황에서는 굳이 RESTful한 API를 구현할 필요는 없음
+    2. Restful하지 못한 경우
+        - CRUD 기능을 모두 POST로만 처리하는 API
+        - route에 resource, id 외의 정보가 들어가는 경우(/students/updateName)
